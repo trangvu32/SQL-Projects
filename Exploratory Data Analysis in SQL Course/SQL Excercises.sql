@@ -21,6 +21,7 @@ SELECT company.name, tag_type.tag, tag_type.type
   WHERE type='cloud';
 
 Coalesce Function
+#Task 4
 SELECT coalesce(industry, sector, 'Unknown') AS industry2,
        COUNT(*) 
   FROM fortune500 
@@ -29,6 +30,7 @@ SELECT coalesce(industry, sector, 'Unknown') AS industry2,
  LIMIT 1;
  
 Coalesce with a self-join
+#Task 5
 SELECT company_original.name, title, rank
   FROM company AS company_original
 	   LEFT JOIN company AS company_parent
@@ -37,6 +39,60 @@ SELECT company_original.name, title, rank
        ON coalesce(company_parent.ticker, 
                    company_original.ticker) = 
              fortune500.ticker
- ORDER BY rank; 
+ 	ORDER BY rank; 
+ 
+ CASTing with () and ::
+ #Task 6
+ SELECT profits_change, 
+       CAST(profits_change AS integer) AS profits_change_int
+  FROM fortune500;
+  
+-- Cast 10 as numeric and divide by 3
+ SELECT 10/3, 
+       10::numeric/3;
+ 
+ -- Select the count of each revenues_change integer value
+SELECT revenues_change::integer, count(*) 
+
+Explore with division
+#Task 7 
+SELECT unanswered_count/question_count::numeric AS computed_pct, 
+       -- What are you comparing the above quantity to?
+       unanswered_pct
+  FROM stackoverflow
+ -- Select rows where question_count is not 0
+ WHERE question_count != 0
+ LIMIT 10;
+  FROM fortune500
+ GROUP BY revenues_change::integer 
+ -- order by the values of revenues_change
+ ORDER BY revenues_change;
+
+Summarize group statistics
+#Task 8
+SELECT stddev(maxval),
+       min(maxval),
+       max(maxval),
+       avg(maxval)
+FROM (SELECT max(question_count) AS maxval
+         FROM stackoverflow
+         GROUP BY tag) AS max_results; 
+	 
+Truncate
+#Task 9 
+ -- Truncate employees
+SELECT trunc(employees, -4) AS employee_bin,
+       count(*)
+  FROM fortune500
+ WHERE employees < 100000
+ GROUP BY employee_bin
+ ORDER BY employee_bin;
+ 
+Generate series
+#Task 10
+--use generate_series() to create bins of size 50 from 2200 to 3100.
+SELECT generate_series(2200, 3050, 50) AS lower,
+       generate_series(2250, 3100, 50) AS upper;
+    
 
 
