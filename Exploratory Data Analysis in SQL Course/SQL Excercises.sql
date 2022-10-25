@@ -114,6 +114,19 @@ SELECT lower, upper, count(question_count)
  -- Order by lower to put bins in order
  ORDER BY lower;
  
-    
+Correlation
+#Task 11
+SELECT corr(revenues, profits) AS rev_profits,
+       corr(revenues, assets) AS rev_assets,
+       corr(revenues, equity) AS rev_equity 
+  FROM fortune500;
+  
+SELECT sector,
+       avg(assets) AS mean,
+  percentile_disc(0.5) WITHIN GROUP (ORDER BY assets) AS median
+  FROM fortune500
+ GROUP BY sector
+ ORDER BY AVG(assets);
+
 
 
