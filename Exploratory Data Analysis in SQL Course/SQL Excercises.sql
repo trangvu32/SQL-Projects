@@ -120,7 +120,6 @@ SELECT corr(revenues, profits) AS rev_profits,
        corr(revenues, assets) AS rev_assets,
        corr(revenues, equity) AS rev_equity 
   FROM fortune500;
-  
 SELECT sector,
        avg(assets) AS mean,
   percentile_disc(0.5) WITHIN GROUP (ORDER BY assets) AS median
@@ -128,5 +127,114 @@ SELECT sector,
  GROUP BY sector
  ORDER BY AVG(assets);
 
+Create a temp table
+#Task 12
+DROP TABLE IF EXISTS profit80;
+CREATE TEMP TABLE profit80 AS
+  SELECT sector, 
+         percentile_disc(0.8) WITHIN GROUP (ORDER BY profits) AS pct80
+    FROM fortune500 
+   GROUP BY sector;
+
+SELECT title, fortune500.sector, 
+       profits, profits/pct80 AS ratio
+  FROM fortune500 
+       LEFT JOIN profit80
+       ON fortune500.sector = profit80.sector 
+WHERE profits > pct80;
+
+Create a temp table to simplify a query
+#Task 13
+DROP TABLE IF EXISTS startdates;
+
+CREATE TEMP TABLE startdates AS
+SELECT tag, min(date) AS mindate
+  FROM stackoverflow
+ GROUP BY tag;
+ 
+SELECT startdates.tag, 
+       mindate, 
+       dajso_min.question_count AS min_date_question_count,
+       so_max.question_count AS max_date_question_count,
+       so_max.question_count - so_min.question_count AS change
+  FROM startdates
+       INNER JOIN stackoverflow AS so_min
+          ON startdates.tag = so_min.tag
+         AND startdates.mindate = so_min.date
+       INNER JOIN stackoverflow AS so_max
+          ON startdates.tag = so_max.tag
+         AND so_max.date = '2018-09-25';
+	 
+Insert into a temp table
+#Task 14
+DROP TABLE IF EXISTS correlations;
+CREATE TEMP TABLE correlations AS
+SELECT 'profits'::varchar AS measure,
+       corr(profits, profits) AS profits,
+       corr(profits, profits_change) AS profits_change,
+       corr(profits, revenues_change) AS revenues_change
+  FROM fortune500;
+
+INSERT INTO correlations
+SELECT 'profits_change'::varchar AS measure,
+       corr(profits_change, profits) AS profits,
+       corr(profits_change, profits_change) AS profits_change,
+       corr(profits_change, revenues_change) AS revenues_change
+  FROM fortune500;
+
+INSERT INTO correlations
+SELECT 'revenues_change'::varchar AS measure,
+       corr(revenues_change, profits) AS profits,
+       corr(revenues_change, profits_change) AS profits_change,
+       corr(revenues_change, revenues_change) AS revenues_change
+  FROM fortune500;
+
+SELECT measure, 
+       round(profits::numeric, 2) AS profits,
+       round(profits_change::numeric, 2) AS profits_change,
+       round(revenues_change::numeric, 2) AS revenues_change
+  FROM correlations;
+  
+Shorten long strings
+#Task 15
+SELECT CASE WHEN length(description) > 50
+            THEN left(description, 50) || '...'
+       ELSE description
+       END
+  FROM evanston311
+ -- limit to descriptions that start with the word I
+ WHERE description LIKE 'I %'
+ ORDER BY description;
+ 
+Group and recode values
+#Task 16
+-- Code from previous step
+DROP TABLE IF EXISTS recode;
+CREATE TEMP TABLE recode AS
+  SELECT DISTINCT category, 
+         rtrim(split_part(category, '-', 1)) AS standardized
+  FROM evanston311;
+UPDATE recode SET standardized='Trash Cart' 
+ WHERE standardized LIKE 'Trash%Cart';
+UPDATE recode SET standardized='Snow Removal' 
+ WHERE standardized LIKE 'Snow%Removal%';
+UPDATE recode SET standardized='UNUSED' 
+ WHERE standardized IN ('THIS REQUEST IS INACTIVE...Trash Cart', 
+               '(DO NOT USE) Water Bill',
+               'DO NOT USE Trash', 'NO LONGER IN USE');
+
+-- Select the recoded categories and the count of each
+SELECT standardized, COUNT(*)
+-- From the original table and table with recoded values
+  FROM evanston311 
+       LEFT JOIN recode 
+       -- What column do they have in common?
+       ON evanston311.category = recode.category 
+ -- What do you need to group by to count?
+ GROUP BY standardized
+ -- Display the most common val values first
+ ORDER BY COUNT(standardized) DESC;
+ 
+ 
 
 
