@@ -225,15 +225,30 @@ UPDATE recode SET standardized='UNUSED'
 
 -- Select the recoded categories and the count of each
 SELECT standardized, COUNT(*)
--- From the original table and table with recoded values
   FROM evanston311 
        LEFT JOIN recode 
-       -- What column do they have in common?
        ON evanston311.category = recode.category 
- -- What do you need to group by to count?
  GROUP BY standardized
- -- Display the most common val values first
  ORDER BY COUNT(standardized) DESC;
+ 
+Create a table with indicator variables
+#Task 17
+DROP TABLE IF EXISTS indicators;
+
+CREATE TEMP TABLE indicators AS
+  SELECT id, 
+         CAST (description LIKE '%@%' AS integer) AS email,
+         CAST (description LIKE '%___-___-____%' AS integer) AS phone 
+    FROM evanston311;
+
+SELECT priority, 
+       -- Compute the proportion of rows with each indicator
+       sum(email)/count(*)::numeric AS email_prop, 
+       sum(phone)/count(*)::numeric AS phone_prop 
+  FROM evanston311
+       LEFT JOIN indicators
+       ON evanston311.id=indicators.id
+ GROUP BY priority;
  
  
 
